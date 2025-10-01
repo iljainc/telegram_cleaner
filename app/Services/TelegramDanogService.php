@@ -359,6 +359,16 @@ class TelegramDanogService
     {
         $this->initSession();
 
+        // Сначала разрешаем peer, чтобы он попал в базу данных MadelineProto
+        try {
+            $this->debug("Разрешаем peer для канала ID: {$channelId}");
+            $resolvedPeer = $this->MadelineProto->getInfo($channelId);
+            $this->debug("Peer успешно разрешен: " . json_encode($resolvedPeer['type'] ?? 'unknown'));
+        } catch (\Exception $e) {
+            $this->error("Ошибка при разрешении peer {$channelId}: " . $e->getMessage());
+            throw $e;
+        }
+
         $peer            = $channelId;
         $limit           = 100;
         $cutoffTimestamp = time() - ($days * 86400);
