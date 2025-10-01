@@ -1,0 +1,84 @@
+services:
+    nginx:
+        image: nginx:latest
+        volumes:
+            - ./:/var/www/
+            - ./_docker/nginx/conf.d/:/etc/nginx/conf.d/:ro
+        depends_on:
+            - app
+        container_name: ${APP_NAME}_nginx
+        networks:
+            - cleaner_network
+            - web
+        labels:
+            - "traefik.enable=true"
+            - "traefik.http.routers.${APP_NAME}.rule=Host(`${APP_NAME}.catrina.one`)"
+            - "traefik.http.routers.${APP_NAME}.entrypoints=websecure"
+            - "traefik.http.routers.${APP_NAME}.tls.certresolver=myresolver"
+            - "traefik.http.services.${APP_NAME}.loadbalancer.server.port=80"
+    app:
+        build:
+            context: .
+            dockerfile: _docker/app/Dockerfile
+        env_file:
+            - .env
+        volumes:
+            - ./:/var/www/
+        depends_on:
+            - db
+            - memcached
+        container_name: ${APP_NAME}
+        dns:
+            - 8.8.8.8
+            - 8.8.4.4
+        cap_add:
+            - SYS_TIME  # Добавлено право для изменения системного времени
+        networks:
+            - cleaner_network
+            - web
+
+    memcached:
+        image: memcached:latest
+        container_name: ${APP_NAME}_memcached
+        command: memcached -m 64 -p 11211 -u memcache -l 0.0.0.0 -U 0
+        networks:
+            - cleaner_network
+
+    db:
+        image: mysql
+        restart: always
+        volumes:
+            - ./tmp/db:/var/lib/mysql
+            - ./_docker/mysql/my.cnf:/etc/mysql/conf.d/custom.cnf:ro
+        environment:
+            MYSQL_DATABASE: ${DB_DATABASE}
+            MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD}
+        command: mysqld --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci --sql-mode=STRICT_TRANS_TABLES
+        container_name: ${DB_HOST}
+        networks:
+            - cleaner_network
+
+    phpmyadmin:
+        image: phpmyadmin
+        restart: always
+        ports:
+            - "86:80"
+        environment:
+            PMA_ARBITRARY: 1
+            PMA_HOST: ${DB_HOST}
+        container_name: ${APP_NAME}_pma
+        networks:
+            - cleaner_network
+            - web
+        labels:
+            - "traefik.enable=true"
+            - "traefik.http.routers.${APP_NAME}_phpmyadmin.rule=Host(`phpmyadmin.${APP_NAME}.catrina.one`)"
+            - "traefik.http.routers.${APP_NAME}_phpmyadmin.entrypoints=websecure"
+            - "traefik.http.routers.${APP_NAME}_phpmyadmin.tls.certresolver=myresolver"
+            - "traefik.http.services.${APP_NAME}_phpmyadmin.loadbalancer.server.port=80"
+
+networks:
+    cleaner_network:
+        driver: bridge
+    web:
+        external: true
