@@ -11,10 +11,9 @@ class CleanOldMessages extends Command
     protected $signature = 'clean';
     protected $description = 'Удаляет старые сообщения из определенных подтем Telegram';
 
-    /*
     // Подтемы для очистки (по ID)
     protected $topicsToClean = [
-        546074, // Отдам/обменяю (в сентябре)
+        546074, // Отдам/обменяю (в августе)
         546069, // Продам (в сентябре) все остальное
         546065, // Продам (в сентябре) одежду, обувь, аксессуары
         546079, // Детям и мамам (в сентябре)
@@ -23,20 +22,21 @@ class CleanOldMessages extends Command
 
     protected $rootGroupId = -1001910727730;
     
+    /*
     protected $topicsToClean = [
         546069, // | Карта сокровищ. Хайфа. Крайоты. | Утилизация отходов  
     ];
-    */
     
     protected $rootGroupId = -1002058410679;
     
     protected $topicsToClean = [
         6, // | Карта сокровищ. Хайфа. Крайоты. | Утилизация отходов  
     ];
+    */
 
     public function handle()
     {
-        $days = 320;
+        $days = 30;
         $this->info("Начинаю очистку сообщений старше {$days} дней");
 
         try {

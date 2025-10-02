@@ -15,7 +15,7 @@ return Application::configure(basePath: dirname(__DIR__))
         \App\Console\Commands\CleanOldMessages::class,
     ])
     ->withSchedule(function ($schedule) {
-        $schedule->command('clean')->dailyAt('03:00');
+        $schedule->command('clean')->monthlyOn(1, '03:00')->withoutOverlapping();
     })
     ->withMiddleware(function (Middleware $middleware): void {
         //
